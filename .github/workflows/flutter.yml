@@ -20,6 +20,11 @@ jobs:
     - uses: subosito/flutter-action@v1.1.1
       with:
         channel: 'stable'
+    - name: Cache packages
+      uses: actions/cache@v1
+      with:
+        path: $HOME/.pub-cache
+        key: pub-${{ hashFiles('pubspec.lock') }}
     - run: flutter pub get
     - name: Run tests
       run: echo "##[set-output name=result;]$(flutter test)"
@@ -29,6 +34,7 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
         message: |
           Tests failed on ${{ github.repository }} !!
           `${{ github.ref }}`
@@ -46,6 +52,7 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
         message: |
           Build failed on ${{ github.repository }} !!
           `${{ github.ref }}`
@@ -77,6 +84,7 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
           message: |
             Successfuly built ${{ github.repository }}
             `${{ github.ref }}`
