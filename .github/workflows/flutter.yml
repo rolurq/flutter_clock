@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    name: Build APK
+    name: Test & Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -16,9 +16,60 @@ jobs:
       with:
         channel: 'stable'
     - run: flutter pub get
-    - run: flutter test
-    - run: flutter build apk --debug --split-per-abi
-    - uses: actions/upload-artifact@master
+    - name: Run tests
+      run: echo "##[set-output name=result;]$(flutter test)"
+      id: test
+    - uses: appleboy/telegram-action@master
+      if: failure()
       with:
-        name: Outputs
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          Tests failed on ${{ github.repository }} !!
+          - Event: ${{ github.event_name }}
+          - User: ${{ github.actor }}
+          - Commit: ${{ github.sha }}
+          ```
+          ${{ steps.test.outputs.result }}
+          ```
+    - name: Build
+      run: echo "##[set-output name=result;]$(flutter build apk --debug --split-per-abi)"
+      id: build
+    - uses: appleboy/telegram-action@master
+      if: failure()
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          Build failed on ${{ github.repository }} !!
+          - Event: ${{ github.event_name }}
+          - User: ${{ github.actor }}
+          - Commit: ${{ github.sha }}
+          ```
+          ${{ steps.build.outputs.result }}
+          ```
+    - name: Upload build output
+      uses: actions/upload-artifact@master
+      with:
+        name: outputs
         path: build/app/outputs/apk/debug/
+
+  notify:
+    name: Notify result
+    needs: [build]
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Download build output
+        uses: actions/download-artifact@v1
+        with:
+          name: outputs
+      - shell: bash
+        run: |
+          zip -r build.zip outputs/
+      - name: Notify on Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: Successfuly built ${{ github.repository }}
+          document: build.zip
