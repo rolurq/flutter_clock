@@ -1,6 +1,11 @@
 name: Flutter CI/CD
 
-on: [push]
+on:
+  push:
+    branches: master
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  pull_request_review:
 
 jobs:
   build:
@@ -26,9 +31,10 @@ jobs:
         token: ${{ secrets.TELEGRAM_TOKEN }}
         message: |
           Tests failed on ${{ github.repository }} !!
+          `${{ github.ref }}`
+          triggered by ${{ github.actor }}
           - Event: ${{ github.event_name }}
-          - User: ${{ github.actor }}
-          - Commit: ${{ github.sha }}
+          - SHA: `${{ github.sha }}`
           ```
           ${{ steps.test.outputs.result }}
           ```
@@ -42,9 +48,10 @@ jobs:
         token: ${{ secrets.TELEGRAM_TOKEN }}
         message: |
           Build failed on ${{ github.repository }} !!
+          `${{ github.ref }}`
+          triggered by ${{ github.actor }}
           - Event: ${{ github.event_name }}
-          - User: ${{ github.actor }}
-          - Commit: ${{ github.sha }}
+          - SHA: `${{ github.sha }}`
           ```
           ${{ steps.build.outputs.result }}
           ```
@@ -64,12 +71,14 @@ jobs:
         with:
           name: outputs
       - shell: bash
-        run: |
-          zip -r build.zip outputs/
+        run: zip -r build.zip outputs/
       - name: Notify on Telegram
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: Successfuly built ${{ github.repository }}
+          message: |
+            Successfuly built ${{ github.repository }}
+            `${{ github.ref }}`
+            triggered by ${{ github.actor }}
           document: build.zip
