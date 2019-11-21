@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -17,4 +17,4 @@ jobs:
         channel: 'stable'
     - run: flutter pub get
     - run: flutter test
-    - run: flutter build apk
+    - run: flutter build apk --debug --split-per-abi
