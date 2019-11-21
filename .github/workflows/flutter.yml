@@ -26,6 +26,7 @@ jobs:
         path: $HOME/.pub-cache
         key: pub-${{ hashFiles('chronus_clock/pubspec.lock') }}
     - run: flutter pub get
+      working-directory: chronus_clock
     - name: Run tests
       run: echo "##[set-output name=result;]$(flutter test)"
       working-directory: chronus_clock
