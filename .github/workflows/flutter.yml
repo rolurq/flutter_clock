@@ -81,7 +81,7 @@ jobs:
       - shell: bash
         run: |
           timestamp=$(date -u +%s)
-          zip -r build_$timestamp.zip outputs/
+          zip -r build_$timestamp.zip build/
           echo "##[set-output name=timestamp;]$(echo $timestamp)"
         id: compress
       - name: Notify on Telegram
