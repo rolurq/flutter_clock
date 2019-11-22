@@ -32,45 +32,33 @@ jobs:
         working-directory: chronus_clock
         id: test
       - if: failure()
-        run: >
-          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage
-          -F chat_id=${{ secrets.TELEGRAM_TO }}
-          -F parse_mode=markdown
-          -F text=\'Tests failed on ${{ github.repository }} !!
-
-          `${{ github.ref }}` triggered by ${{ github.actor }}
-
-          - Event: ${{ github.event_name }}
-
-          - SHA: `${{ github.sha }}`
-
-          ```
-
-          ${{ steps.test.outputs.result }}
-
-          ```\'
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
+            -F chat_id=${{ secrets.TELEGRAM_TO }} \
+            -F parse_mode=markdown \
+            -F text='Tests failed on ${{ github.repository }} !!
+            `${{ github.ref }}` triggered by ${{ github.actor }}
+            - Event: ${{ github.event_name }}
+            - SHA: `${{ github.sha }}`
+            ```
+            ${{ steps.test.outputs.result }}
+            ```'
       - name: Build
         run: echo "##[set-output name=result;]$(flutter build apk --debug --split-per-abi)"
         working-directory: chronus_clock
         id: build
       - if: failure()
-        run: >
-          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage
-          -F chat_id=${{ secrets.TELEGRAM_TO }}
-          -F parse_mode=markdown
-          -F text='Build failed on ${{ github.repository }} !!
-
-          `${{ github.ref }}` triggered by ${{ github.actor }}
-
-          - Event: ${{ github.event_name }}
-
-          - SHA: `${{ github.sha }}`
-
-          ```
-
-          ${{ steps.build.outputs.result }}
-
-          ```'
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
+            -F chat_id=${{ secrets.TELEGRAM_TO }} \
+            -F parse_mode=markdown \
+            -F text='Build failed on ${{ github.repository }} !!
+            `${{ github.ref }}` triggered by ${{ github.actor }}
+            - Event: ${{ github.event_name }}
+            - SHA: `${{ github.sha }}`
+            ```
+            ${{ steps.build.outputs.result }}
+            ```'
       - name: Upload build output
         uses: actions/upload-artifact@master
         with:
@@ -93,11 +81,10 @@ jobs:
           echo "##[set-output name=timestamp;]$(echo $timestamp)"
         id: compress
       - name: Notify on Telegram
-        run: >
-          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument
-          -F chat_id=${{ secrets.TELEGRAM_TO }}
-          -F parse_mode=markdown
-          -F document=@"./build_${{ steps.compress.outputs.timestamp  }}.zip"
-          -F caption='Successfuly built ${{ github.repository }}
-
-            `${{ github.ref }}` triggered by ${{ github.actor }}'
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument \
+            -F chat_id=${{ secrets.TELEGRAM_TO }} \
+            -F parse_mode=markdown \
+            -F document=@"./build_${{ steps.compress.outputs.timestamp  }}.zip" \
+            -F caption='Successfuly built ${{ github.repository }}
+              `${{ github.ref }}` triggered by ${{ github.actor }}'
