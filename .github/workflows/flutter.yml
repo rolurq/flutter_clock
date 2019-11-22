@@ -79,7 +79,11 @@ jobs:
         with:
           name: build
       - shell: bash
-        run: zip -r build.zip outputs/
+        run: |
+          timestamp=$(date -u +%s)
+          zip -r build_$timestamp.zip outputs/
+          echo "##[set-output name=timestamp;]$(echo $timestamp)"
+        id: compress
       - name: Notify on Telegram
         uses: appleboy/telegram-action@master
         with:
@@ -89,4 +93,4 @@ jobs:
           message: |
             Successfuly built ${{ github.repository }}
             `${{ github.ref }}` triggered by ${{ github.actor }}
-          document: build.zip
+          document: build_${{ steps.compress.outputs.timestamp  }}.zip
