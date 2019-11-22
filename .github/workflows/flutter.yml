@@ -13,55 +13,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-java@v1
-      with:
-        java-version: '12.x'
-    - uses: subosito/flutter-action@v1.1.1
-      with:
-        channel: 'stable'
-    - name: Cache packages
-      uses: actions/cache@v1
-      with:
-        path: $HOME/.pub-cache
-        key: pub-${{ hashFiles('chronus_clock/pubspec.lock') }}
-    - run: flutter pub get
-      working-directory: chronus_clock
-    - name: Run tests
-      run: echo "##[set-output name=result;]$(flutter test)"
-      working-directory: chronus_clock
-      id: test
-    - if: failure()
-      run: curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage
-        -F chat_id=${{ secrets.TELEGRAM_TO }}
-        -F parse_mode=markdown
-        -F text=\'Tests failed on ${{ github.repository }} !!
-        `${{ github.ref }}` triggered by ${{ github.actor }}
-        - Event: ${{ github.event_name }}
-        - SHA: `${{ github.sha }}`
-        ```
-        ${{ steps.test.outputs.result }}
-        ```\'
-    - name: Build
-      run: echo "##[set-output name=result;]$(flutter build apk --debug --split-per-abi)"
-      working-directory: chronus_clock
-      id: build
-    - if: failure()
-      run: curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage
-        -F chat_id=${{ secrets.TELEGRAM_TO }}
-        -F parse_mode=markdown
-        -F text=\'Build failed on ${{ github.repository }} !!
-        `${{ github.ref }}` triggered by ${{ github.actor }}
-        - Event: ${{ github.event_name }}
-        - SHA: `${{ github.sha }}`
-        ```
-        ${{ steps.build.outputs.result }}
-        ```\'
-    - name: Upload build output
-      uses: actions/upload-artifact@master
-      with:
-        name: build
-        path: chronus_clock/build/app/outputs/apk/debug/
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: "12.x"
+      - uses: subosito/flutter-action@v1.1.1
+        with:
+          channel: "stable"
+      - run: flutter pub get
+        working-directory: chronus_clock
+      - name: Run tests
+        run: echo "##[set-output name=result;]$(flutter test)"
+        working-directory: chronus_clock
+        id: test
+      - if: failure()
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
+          -F chat_id=${{ secrets.TELEGRAM_TO }} \
+          -F parse_mode=html \
+          -F text='<b>Tests failed !!</b> on ${{ github.repository }}
+          <code>${{ github.ref }}</code> triggered by ${{ github.actor }}
+          - Event: ${{ github.event_name }}
+          - SHA: <code>${{ github.sha }}</code>
+          <pre>
+          ${{ steps.test.outputs.result }}
+          </pre>'
+      - name: Build
+        run: echo "##[set-output name=result;]$(flutter build apk --debug --split-per-abi)"
+        working-directory: chronus_clock
+        id: build
+      - if: failure()
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
+          -F chat_id=${{ secrets.TELEGRAM_TO }} \
+          -F parse_mode=html \
+          -F text='<b>Build failed !!</b> on ${{ github.repository }}
+          <code>${{ github.ref }}</code> triggered by ${{ github.actor }}
+          - Event: ${{ github.event_name }}
+          - SHA: <code>${{ github.sha }}</code>
+          <pre>
+          ${{ steps.build.outputs.result }}
+          </pre>'
+      - name: Upload build output
+        uses: actions/upload-artifact@master
+        with:
+          name: build
+          path: chronus_clock/build/app/outputs/apk/debug/
 
   notify:
     name: Notify result
@@ -79,9 +76,10 @@ jobs:
           echo "##[set-output name=timestamp;]$(echo $timestamp)"
         id: compress
       - name: Notify on Telegram
-        run: curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument
-          -F chat_id=${{ secrets.TELEGRAM_TO }}
-          -F parse_mode=markdown
-          -F document=@"./build_${{ steps.compress.outputs.timestamp  }}.zip"
-          -F caption=\'Successfuly built ${{ github.repository }}
-            `${{ github.ref }}` triggered by ${{ github.actor }}\'
+        run: |
+          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument \
+          -F chat_id=${{ secrets.TELEGRAM_TO }} \
+          -F parse_mode=html \
+          -F document=@"./build_${{ steps.compress.outputs.timestamp  }}.zip" \
+          -F caption='Successfuly built ${{ github.repository }}
+          <code>${{ github.ref }}</code> triggered by ${{ github.actor }}'
