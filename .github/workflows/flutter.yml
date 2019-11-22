@@ -27,6 +27,9 @@ jobs:
         key: pub-${{ hashFiles('chronus_clock/pubspec.lock') }}
     - run: flutter pub get
       working-directory: chronus_clock
+    - run: echo "##[set-output name=result;]$(flutter analyze)"
+      working-directory: chronus_clock
+      id: analyze
     - name: Run tests
       run: echo "##[set-output name=result;]$(flutter test)"
       working-directory: chronus_clock
@@ -93,4 +96,7 @@ jobs:
           message: |
             Successfuly built ${{ github.repository }}
             `${{ github.ref }}` triggered by ${{ github.actor }}
+            ```
+            ${{ jobs.build.steps.analyze.outputs.result }}
+            ```
           document: build_${{ steps.compress.outputs.timestamp  }}.zip
